@@ -1,4 +1,5 @@
-import requests
+import urllib3
+from urllib3 import request
 import time
 
 baseURL = 'https://www.federalregister.gov/api/v1'
@@ -65,11 +66,11 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
     if retry_intervals:
         for retry_interval in retry_intervals:
             try:
-                r = requests.get(url, params=params, timeout=timeout)
-            except requests.exceptions.ConnectionError:
+                r = request("GET", url, fields=params, timeout=timeout)
+            except urllib3.exceptions.ProtocolError:
                 time.sleep(retry_interval)
                 continue
-            if r.ok:
+            if r.status >= 200 and r.status < 400:
                 if check_json:
                     # Optional: retry if json content is corrupted
                     try:
@@ -80,7 +81,7 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
                 # Return successful request
                 return r
 
-            elif r.status_code == 429 and wait_interval > 0:
+            elif r.status == 429 and wait_interval > 0:
                 # If rate-limit reached, wait and then use recursion to
                 # restart retry intervals
                 # (Never gives up unless a different error occurs)
@@ -93,34 +94,35 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
                                       timeout=timeout,
                                       check_json=check_json)
 
-            elif 400 <= r.status_code <= 500:
+            elif 400 <= r.status <= 500:
                 # Don't bother to retry if the request is bad
-                r.raise_for_status()
+                #r.raise_for_status()
+                print(f"error: {urllib3.exceptions.HTTPError}")
 
             else:
                 # Retry if any other error occurs
                 time.sleep(retry_interval)
+    else:
+        r = request("GET", url, fields=params, timeout=timeout)
+
+        # Still want to handle rate limits without other retries.
+        if r.status == 429 and wait_interval > 0:
+            # If rate-limit reached, wait and then use recursion to
+            # restart retry intervals
+            # (Never gives up unless a different error occurs)
+            print('Rate limit reached. Waiting {:.1f} min to retry'
+                    .format(wait_interval / 60.0))
+
+            time.sleep(wait_interval)
+            return get_with_retry(url, params=params,
+                                    retry_intervals=retry_intervals,
+                                    wait_interval=wait_interval,
+                                    timeout=timeout,
+                                    check_json=check_json)
+
         else:
-            r = requests.get(url, params=params, timeout=timeout)
-
-            # Still want to handle rate limits without other retries.
-            if r.status_code == 429 and wait_interval > 0:
-                # If rate-limit reached, wait and then use recursion to
-                # restart retry intervals
-                # (Never gives up unless a different error occurs)
-                print('Rate limit reached. Waiting {:.1f} min to retry'
-                      .format(wait_interval / 60.0))
-
-                time.sleep(wait_interval)
-                return get_with_retry(url, params=params,
-                                      retry_intervals=retry_intervals,
-                                      wait_interval=wait_interval,
-                                      timeout=timeout,
-                                      check_json=check_json)
-
-            else:
-                r.raise_for_status()
-                return r
+            urllib3.exceptions.HTTPError
+            return r
 
 
 def get(url, params={}, timeout=10, ignore_codes=[], check_json=False):

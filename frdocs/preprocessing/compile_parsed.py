@@ -7,6 +7,7 @@ import gzip
 from lxml import etree as et
 import pandas as pd
 import re
+from io import StringIO 
 
 from frdocs.preprocessing.parsing import parse_reg_xml_tree, FrdocResolver
 from frdocs.config import data_dir
@@ -25,14 +26,32 @@ def iter_docs(xml_dir):
         pub_date = xml_file.split('.')[0]
 
         with gzip.open(os.path.join(xml_dir, xml_file),'rb') as f:
-            xml_raw = f.read()
-            xml_raw = re.sub(b'<E T="\d+">',b"",xml_raw)
-            xml_raw = re.sub(b"</E>",b"",xml_raw)
-            tree = et.ElementTree(et.fromstring(xml_raw))
+            xml_raw = f.read().decode(encoding="utf-8")
+            #xml_raw = re.sub(r'<E\sT="\d+">',r"",xml_raw)
+            #xml_raw = re.sub(r"</E>",r"",xml_raw)
+            parser = et.XMLParser(remove_pis=True)
+            tree = et.parse(StringIO(xml_raw))
+
+            # <P> 엘리먼트 내에 있는 각각의 텍스트 노드를 처리합니다.
+            for p_element in tree.xpath("//P"):
+                # <P> 엘리먼트 내에 있는 텍스트를 저장할 리스트를 생성합니다.
+                text_list = []
+                
+                # <P> 엘리먼트 내에 있는 각각의 텍스트 노드를 가져와서 리스트에 추가합니다.
+                for item in p_element.xpath(".//text()"):
+                    text_list.append(item.strip())
+
+                # <E> 엘리먼트의 텍스트를 가져와서 리스트에 추가합니다.
+                for element in p_element:
+                    # <E> 엘리먼트를 삭제합니다.
+                    element.getparent().remove(element)
+
+                # 변경된 텍스트를 합쳐서 <P> 엘리먼트의 텍스트로 설정합니다.
+                p_element.text = ' '.join(text_list)
 
             volume = int(tree.xpath('.//VOL/text()')[0])
 
-            for fr_type in ['NOTICE','PRORULE','RULE']:
+            for fr_type in ['NOTICE','PRORULE','RULE','PRESDOCU']:
                 for type_element in tree.xpath(f'.//{fr_type}S'):
 
                     try:
@@ -104,7 +123,7 @@ def main(args):
             if (frdoc not in existing) or args.force_update:
 
                 parsed_df = parse_reg_xml_tree(doc['doc_tree'])
-                parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
+                #parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
                 parsed_df.to_csv(os.path.join(parsed_dir, f'{frdoc}.csv'))
 
                 existing.add(frdoc)
