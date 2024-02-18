@@ -55,14 +55,14 @@ def main(args):
 
         info_df = load_info_df(fields=['document_number', 'publication_date', 'full_text_xml_url'])
 
-        fr_dates_df = info_df[info_df['full_text_xml_url'].notnull()]
+        #fr_dates_df = info_df[info_df['full_text_xml_url'].notnull()]
         dates_df = info_df \
                             .groupby('publication_date')[['document_number']].count() \
                             .reset_index() \
                             .rename(columns={'document_number': 'documents'})
 
         dates = sorted(list(dates_df['publication_date']))
-        document_list = sorted(list(dates_df['documents']))
+        #document_list = sorted(list(dates_df['documents']))
 
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)

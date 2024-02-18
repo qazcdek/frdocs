@@ -7,7 +7,6 @@ import gzip
 from lxml import etree as et
 import pandas as pd
 from io import StringIO
-import re
 
 from frdocs.preprocessing.parsing import parse_reg_xml_tree, FrdocResolver
 from frdocs.config import data_dir
@@ -26,11 +25,9 @@ def iter_docs(xml_dir):
         pub_date = xml_file.split('.')[0]
 
         with gzip.open(os.path.join(xml_dir, xml_file),'rb') as f:
-            xml_raw = f.read().decode(encoding="utf-8")
-            #xml_raw = re.sub(r'<E\sT="\d+">',r"",xml_raw)
-            #xml_raw = re.sub(r"</E>",r"",xml_raw)
-            parser = et.XMLParser(remove_pis=True)
-            tree = et.parse(StringIO(xml_raw), parser=parser)
+            #xml_raw = f.read().decode(encoding="utf-8")
+            parser = et.XMLParser(encoding='utf-8')
+            tree = et.parse(f, parser)
 
             # <P> 엘리먼트 내에 있는 각각의 텍스트 노드를 처리합니다.
             for p_element in tree.xpath("//P"):
@@ -123,7 +120,7 @@ def main(args):
             if (frdoc not in existing) or args.force_update:
 
                 parsed_df = parse_reg_xml_tree(doc['doc_tree'])
-                parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
+                #parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
                 parsed_df.to_csv(os.path.join(parsed_dir, f'{frdoc}.csv'))
 
                 existing.add(frdoc)

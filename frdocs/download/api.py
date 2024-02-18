@@ -1,6 +1,5 @@
 import requests
 import time
-import json
 
 baseURL = 'https://www.federalregister.gov/api/v1'
 searchURL = baseURL + '/documents.json?'
@@ -26,12 +25,8 @@ allFields = ['abstract', 'action', 'agencies',
 def search(searchParams):
     response = get_with_retry(searchURL, searchParams,
                               retry_intervals=[1, 10, 100], timeout=100)
-    try:
-        results = json.loads(str(response))
-        print(results)
-    except:
-        print(f"에러? {str(response)}")
-    
+    results = response.json()
+
     if results['count'] > 10000:
         print('Warning: Results will be truncated at 10,000 entries')
 
@@ -51,14 +46,13 @@ def search(searchParams):
 def get_all_agencies(retry_intervals=[1, 10]):
     response = get_with_retry(baseURL + '/agencies',
                               retry_intervals=retry_intervals)
-    response = response.read()
-    return json.loads(response.decode(encoding='utf-8'))
+    return response.json()
 
 
 
 
 
-def get_with_retry(url, params={}, retry_intervals=[1., 10., 60.],
+def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
                    wait_interval=60, timeout=10, check_json=False):
     '''
     A wrapper for requests.get that tries to handle most of the common reasons
@@ -67,7 +61,6 @@ def get_with_retry(url, params={}, retry_intervals=[1., 10., 60.],
         -Rate limits (via wait_interval)
         -corrupted json (optional)
     '''
-    url = url + "?" + urllib.parse.urlencode(params)
 
     if retry_intervals:
         for retry_interval in retry_intervals:
@@ -80,8 +73,7 @@ def get_with_retry(url, params={}, retry_intervals=[1., 10., 60.],
                 if check_json:
                     # Optional: retry if json content is corrupted
                     try:
-                        string = r.read().decode('utf-8')
-                        json_obj = json.loads(string)
+                        r.json()
                     except Exception:
                         continue
 

@@ -108,7 +108,7 @@ def load_parsed(frdoc_number):
     '''
     Loads a single parsed file by FR document number.
     '''
-    return pd.read_pickle(os.path.join(data_dir, 'parsed', f'{frdoc_number}.pkl'))
+    return pd.read_csv(os.path.join(data_dir, 'parsed', f'{frdoc_number}.csv'))
 
 
 def iter_parsed(frdoc_numbers=None, missing='warn'):
@@ -153,14 +153,14 @@ def iter_agenda(publications=None,rin_list=None):
 
     for publication in publications:
 
-        for rin_file in os.listdir(agenda_dir/publication):
+        for rin_file in os.listdir(os.path.join(agenda_dir, publication)):
 
             if rin_list:
                 rin = rin_file.split('.')[0]
                 if rin not in rin_list:
                     continue
 
-            with open(agenda_dir/publication/rin_file,'rb') as f:
+            with open(os.path.join(agenda_dir, publication, rin_file),'rb') as f:
                 yield load(f)
 
 
