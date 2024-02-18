@@ -122,6 +122,7 @@ def main(args):
 
     # Read daily metadata files
     index = []
+    index_full = []
     for file in tqdm(os.listdir(os.path.join(data_dir, 'raw', 'meta'))):
         with open(os.path.join(data_dir, 'raw', 'meta', file), 'rb') as f_read:
             records = load(f_read)
@@ -137,9 +138,12 @@ def main(args):
 
                 # Save print info to index
                 index.append({k:record[k] for k in ['frdoc_number','publication_date','volume','start_page','end_page','fr_type']})
+                index_full.append(record)
 
     index_df = pd.DataFrame(index)
+    index_full_df = pd.DataFrame(index_full)
     index_df.to_csv(os.path.join(data_dir, 'index.csv'), index=False)
+    index_full_df.to_csv(os.path.join(data_dir, 'index_full.csv'), index=False)
 
     try:
         print(f"Compiled info for {len(index_df)} printed documents ({index_df['frdoc_number'].nunique()} unique frdocs)")

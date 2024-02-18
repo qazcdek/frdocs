@@ -48,13 +48,14 @@ def iter_docs(xml_dir):
 
             volume = int(tree.xpath('.//VOL/text()')[0])
 
-            for fr_type in ['NOTICE','PRORULE','RULE']:
+            for fr_type in ['NOTICE','PRORULE','RULE','PRESDOCU']:
                 for type_element in tree.xpath(f'.//{fr_type}S'):
 
                     try:
                         start_page = int(type_element.xpath('.//PRTPAGE/@P')[0])
                     except IndexError:
                         start_page = -1
+                        print(f"parse page error occured!")
 
                     for doc_element in type_element.xpath(f'.//{fr_type}'):
                         # doc_tree = et.ElementTree(doc_element)
@@ -76,12 +77,14 @@ def iter_docs(xml_dir):
 
                         # Can only get the FR document number from the end of the document
                         frdoc_elements = doc_element.xpath('./FRDOC')
+                        if fr_type == 'PRESDOCU':
+                            frdoc_elements = doc_element.xpath('./PROCLA/FRDOC')
 
                         if not frdoc_elements:
                             print(f'Warning: Could not find FRDOC element in {xml_file}: {tree.getpath(doc_element)}')
                             doc['frdoc_string'] = None
 
-                        elif len(frdoc_elements) > 1:
+                        elif len(frdoc_elements) > 1 and fr_type != 'PRESDOCU':
                             print(f'Warning: Found {len(frdoc_elements)} FRDOC elements in {xml_file}: {tree.getpath(doc_element)}')
                             doc['frdoc_string'] = None
 
@@ -127,6 +130,7 @@ def main(args):
                 n_parsed += 1
         else:
             failed.append(doc)
+            print(doc)
 
     print(f'Parsed {n_parsed} new documents')
     completeness = len(existing)/len(frdoc_resolver.all_frdocs)
