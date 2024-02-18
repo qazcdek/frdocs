@@ -54,13 +54,13 @@ def main(args):
 
         searchParams = {
                         'order':'oldest',
-                        'per_page':1000,
+                        'per_page':"1000",
                         'fields[]':api.allFields,
                         'conditions[publication_date][is]':str(d),
                        }
 
         results = list(api.search(searchParams))
-
+        
         if results:
             with open(save_file,'wb') as f:
                 dump(results,f)

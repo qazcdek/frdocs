@@ -30,7 +30,7 @@ def iter_docs(xml_dir):
             #xml_raw = re.sub(r'<E\sT="\d+">',r"",xml_raw)
             #xml_raw = re.sub(r"</E>",r"",xml_raw)
             parser = et.XMLParser(remove_pis=True)
-            tree = et.parse(StringIO(xml_raw))
+            tree = et.parse(StringIO(xml_raw), parser=parser)
 
             # <P> 엘리먼트 내에 있는 각각의 텍스트 노드를 처리합니다.
             for p_element in tree.xpath("//P"):

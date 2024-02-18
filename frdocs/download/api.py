@@ -1,6 +1,9 @@
-import urllib3
-from urllib3 import request
+import urllib
+import urllib.parse
+import urllib.error
+from urllib.request import Request, urlopen
 import time
+import json
 
 baseURL = 'https://www.federalregister.gov/api/v1'
 searchURL = baseURL + '/documents.json?'
@@ -26,8 +29,12 @@ allFields = ['abstract', 'action', 'agencies',
 def search(searchParams):
     response = get_with_retry(searchURL, searchParams,
                               retry_intervals=[1, 10, 100], timeout=100)
-    results = response.json()
-
+    try:
+        results = json.loads(str(response))
+        print(results)
+    except:
+        print(f"에러? {str(response)}")
+    
     if results['count'] > 10000:
         print('Warning: Results will be truncated at 10,000 entries')
 
@@ -47,13 +54,14 @@ def search(searchParams):
 def get_all_agencies(retry_intervals=[1, 10]):
     response = get_with_retry(baseURL + '/agencies',
                               retry_intervals=retry_intervals)
-    return response.json()
+    response = response.read()
+    return json.loads(response.decode(encoding='utf-8'))
 
 
 
 
 
-def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
+def get_with_retry(url, params={}, retry_intervals=[1., 10., 60.],
                    wait_interval=60, timeout=10, check_json=False):
     '''
     A wrapper for requests.get that tries to handle most of the common reasons
@@ -62,19 +70,22 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
         -Rate limits (via wait_interval)
         -corrupted json (optional)
     '''
+    url = url + "?" + urllib.parse.urlencode(params)
 
     if retry_intervals:
         for retry_interval in retry_intervals:
             try:
-                r = request("GET", url, fields=params, timeout=timeout)
-            except urllib3.exceptions.ProtocolError:
+                r = urlopen(url, timeout=timeout)
+            except urllib.error.HTTPError as e:
+                print(f"after {retry_interval} sec, retry get metadata, error code: {e}")
                 time.sleep(retry_interval)
                 continue
             if r.status >= 200 and r.status < 400:
                 if check_json:
                     # Optional: retry if json content is corrupted
                     try:
-                        r.json()
+                        string = r.read().decode('utf-8')
+                        json_obj = json.loads(string)
                     except Exception:
                         continue
 
@@ -97,13 +108,13 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
             elif 400 <= r.status <= 500:
                 # Don't bother to retry if the request is bad
                 #r.raise_for_status()
-                print(f"error: {urllib3.exceptions.HTTPError}")
+                print(f"protocol error: {r.status}")
 
             else:
                 # Retry if any other error occurs
                 time.sleep(retry_interval)
     else:
-        r = request("GET", url, fields=params, timeout=timeout)
+        r = urlopen(url, timeout=timeout)
 
         # Still want to handle rate limits without other retries.
         if r.status == 429 and wait_interval > 0:
@@ -121,7 +132,7 @@ def get_with_retry(url, params={}, retry_intervals=[1, 10, 60],
                                     check_json=check_json)
 
         else:
-            urllib3.exceptions.HTTPError
+            print("error occured!")
             return r
 
 
