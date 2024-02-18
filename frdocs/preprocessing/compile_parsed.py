@@ -6,8 +6,8 @@ from tqdm import tqdm
 import gzip
 from lxml import etree as et
 import pandas as pd
+from io import StringIO
 import re
-from io import StringIO 
 
 from frdocs.preprocessing.parsing import parse_reg_xml_tree, FrdocResolver
 from frdocs.config import data_dir
@@ -51,7 +51,7 @@ def iter_docs(xml_dir):
 
             volume = int(tree.xpath('.//VOL/text()')[0])
 
-            for fr_type in ['NOTICE','PRORULE','RULE','PRESDOCU']:
+            for fr_type in ['NOTICE','PRORULE','RULE']:
                 for type_element in tree.xpath(f'.//{fr_type}S'):
 
                     try:
@@ -123,7 +123,7 @@ def main(args):
             if (frdoc not in existing) or args.force_update:
 
                 parsed_df = parse_reg_xml_tree(doc['doc_tree'])
-                #parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
+                parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
                 parsed_df.to_csv(os.path.join(parsed_dir, f'{frdoc}.csv'))
 
                 existing.add(frdoc)

@@ -1,7 +1,7 @@
 import os
 from argparse import ArgumentParser
 import gzip
-from urllib3.exceptions import HTTPError
+from requests import HTTPError
 from tqdm import tqdm
 
 from frdocs.download.api import get_with_retry
@@ -43,7 +43,7 @@ def main(args):
                 r = get_with_retry(url)
 
                 with gzip.open(save_file,'wb') as f:
-                    f.write(r.data)
+                    f.write(r.content)
                 downloaded += 1
             except:
                 failed.append(d)
@@ -91,11 +91,11 @@ def main(args):
                 r = get_with_retry(url)
 
                 # Check that we haven't been redirected to a no results found page
-                if b'xml' in r.data.lower():
+                if b'xml' in r.content[:20].lower():
 
                     # Save content
                     with gzip.open(save_file, 'wb') as f:
-                        f.write(r.data)
+                        f.write(r.content)
                         downloaded += 1
                 else:
                     failed.append(d)
