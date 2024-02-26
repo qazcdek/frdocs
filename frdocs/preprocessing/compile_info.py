@@ -141,9 +141,9 @@ def main(args):
                 index_full.append(record)
 
     index_df = pd.DataFrame(index)
-    index_full_df = pd.DataFrame(index_full)
+    index_full_df = pd.DataFrame(index_full).set_index('frdoc_number', drop=False)
     index_df.to_csv(os.path.join(data_dir, 'index.csv'), index=False)
-    index_full_df.to_csv(os.path.join(data_dir, 'index_full.csv'), index=False)
+    index_full_df.to_json(os.path.join(data_dir, 'index_full.json'), index=True, orient='index')
 
     try:
         print(f"Compiled info for {len(index_df)} printed documents ({index_df['frdoc_number'].nunique()} unique frdocs)")

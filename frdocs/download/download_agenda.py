@@ -29,6 +29,9 @@ def get_agenda_urls():
 
 
 def main(args=None):
+    start_agenda = "".join(args.start_agenda.split("."))
+    end_agenda = "".join(args.end_agenda.split("."))
+    print(f"start from {start_agenda} end to {end_agenda}")
     print('Downloading unified agenda files')
     download_dir = os.path.join(data_dir, 'raw')
 
@@ -49,9 +52,13 @@ def main(args=None):
 
         save_file = os.path.join(download_dir, 'agenda', f"{m.group(1).decode('utf8')}-{m.group(2).decode('utf8')}.xml")
 
-        with open(save_file,'wb') as f:
-            f.write(xml)
+        if int(m.group(1).decode('utf8') + m.group(2).decode('utf8')) >= int(start_agenda) and int(m.group(1).decode('utf8') + m.group(2).decode('utf8')) <= int(end_agenda):
 
+            with open(save_file,'wb') as f:
+                f.write(xml)
+            print(f"{m.group(1).decode('utf8') + m.group(2).decode('utf8')} complete!")
+        else:
+            print(f"{m.group(1).decode('utf8') + m.group(2).decode('utf8')} is out of range!")
 
 if __name__ == '__main__':
     main()

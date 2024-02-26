@@ -15,6 +15,10 @@ if __name__ == "__main__":
 
     parser.add_argument('--start_date',type=str,default='1994-01-03')
     parser.add_argument('--end_date',type=str,default=str(datetime.today().date()))
+
+    parser.add_argument('--start_agenda',type=str,default='1990.01')
+    parser.add_argument('--end_agenda',type=str,default=str(datetime.today().year) + "." + str(datetime.today().month).zfill(2))
+
     parser.add_argument('--force_update',dest='force_update',action='store_true')
 
     parser.add_argument('--agenda_dir',type=str,default=str(os.path.join(data_dir, 'agenda')))

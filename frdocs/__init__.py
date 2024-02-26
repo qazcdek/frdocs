@@ -257,7 +257,6 @@ class CitationFinder():
 
             else:
                 raise ValueError('Must initialize citation finder with enable_keywords=True to use keyword disambiguation')
-
         return list(df.to_dict('records'))
 
     def tokenize(self,s):

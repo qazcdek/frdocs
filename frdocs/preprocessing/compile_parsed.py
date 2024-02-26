@@ -48,8 +48,14 @@ def iter_docs(xml_dir):
 
             volume = int(tree.xpath('.//VOL/text()')[0])
 
-            for fr_type in ['NOTICE','PRORULE','RULE','PRESDOCU']:
-                for type_element in tree.xpath(f'.//{fr_type}S'):
+            for fr_type in ['NOTICE','PRORULE','RULE','PROCLA']:
+                fr_parent = {
+                    'NOTICE':'NOTICES',
+                    'PRORULE':'PRORULES',
+                    'RULE':'RULES',
+                    'PROCLA':'PRESDOCU'
+                }
+                for type_element in tree.xpath(f'.//{fr_parent[fr_type]}'):
 
                     try:
                         start_page = int(type_element.xpath('.//PRTPAGE/@P')[0])
@@ -77,14 +83,12 @@ def iter_docs(xml_dir):
 
                         # Can only get the FR document number from the end of the document
                         frdoc_elements = doc_element.xpath('./FRDOC')
-                        if fr_type == 'PRESDOCU':
-                            frdoc_elements = doc_element.xpath('./PROCLA/FRDOC')
 
                         if not frdoc_elements:
                             print(f'Warning: Could not find FRDOC element in {xml_file}: {tree.getpath(doc_element)}')
                             doc['frdoc_string'] = None
 
-                        elif len(frdoc_elements) > 1 and fr_type != 'PRESDOCU':
+                        elif len(frdoc_elements) > 1:
                             print(f'Warning: Found {len(frdoc_elements)} FRDOC elements in {xml_file}: {tree.getpath(doc_element)}')
                             doc['frdoc_string'] = None
 
@@ -124,7 +128,7 @@ def main(args):
 
                 parsed_df = parse_reg_xml_tree(doc['doc_tree'])
                 #parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
-                parsed_df.to_csv(os.path.join(parsed_dir, f'{frdoc}.csv'))
+                parsed_df.to_json(os.path.join(parsed_dir, f'{frdoc}.csv'), orient='index')
 
                 existing.add(frdoc)
                 n_parsed += 1

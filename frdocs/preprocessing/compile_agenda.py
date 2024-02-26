@@ -1,4 +1,5 @@
 import os
+import sys
 import lxml.etree as et
 from msgpack import dump
 from tqdm import tqdm
@@ -127,8 +128,8 @@ def clean_agenda(record,citation_finder=None):
                                 event['frdoc_number'] = finder_results[0]['frdoc_number']
                                 event['citation_resolved_by'] = 'keyword_similarity'
 
-                    # if 'frdoc_number' not in event:
-                    #     print(f"Warning: Could not resolve citation \"{event['fr_citation']}\" for {record['publication']}/{record['rin']}")
+                    if 'frdoc_number' not in event:
+                        print(f"Warning: Could not resolve citation \"{event['fr_citation']}\" for {record['publication']}/{record['rin']}")
 
                 linked_timetable.append(event)
 
