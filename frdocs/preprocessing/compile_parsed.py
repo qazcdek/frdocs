@@ -128,7 +128,7 @@ def main(args):
 
                 parsed_df = parse_reg_xml_tree(doc['doc_tree'])
                 #parsed_df.to_pickle(os.path.join(parsed_dir, f'{frdoc}.pkl'))
-                parsed_df.to_json(os.path.join(parsed_dir, f'{frdoc}.csv'), orient='index')
+                parsed_df.to_json(os.path.join(parsed_dir, f'{frdoc}.json'), orient='index')
 
                 existing.add(frdoc)
                 n_parsed += 1
