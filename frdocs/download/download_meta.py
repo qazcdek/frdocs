@@ -19,7 +19,7 @@ def main(args):
     download_dir = os.path.join(data_dir, 'raw')
 
     start_date = parse_date(args.start_date).date()
-    end_date = parse_date(args.end_date).date()
+    end_date = parse_date(args.end_date).date() + timedelta(days=1)
 
     if not os.path.exists(download_dir):
         os.makedirs(download_dir)
