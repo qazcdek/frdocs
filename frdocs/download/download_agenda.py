@@ -3,6 +3,7 @@ import requests
 import lxml.etree as et
 import re
 from tqdm import tqdm
+import json
 
 from frdocs.config import data_dir
 
@@ -41,24 +42,52 @@ def main(args=None):
     if not os.path.exists(os.path.join(download_dir, 'agenda')):
         os.makedirs(os.path.join(download_dir, 'agenda'))
 
+    agenda_list_path = os.path.join(download_dir, 'agenda', 'agenda_list.json')
+    if not os.path.exists(agenda_list_path):
+        df_agenda_list = {}
+        exist_urls = []
+
+    else: 
+        with open(agenda_list_path, 'r') as f:
+            df_agenda_list = json.load(f)
+        exist_urls = [df_agenda_list[k]['url'] for k in df_agenda_list]
+
     agenda_urls = get_agenda_urls()
+    
     for url in tqdm(agenda_urls):
+        
+        if (not args.force_update) and (not df_agenda_list == {}):
+            if url in exist_urls:
+                print(f"skip: already exists agenda {url}")
+                continue
+        try:
+            if not (int(url[-10:-4]) >= int(start_agenda) and int(url[-10:-4]) <= int(end_agenda)):
+                continue
+        except:
+            pass
+
         r = requests.get(url)
         r.raise_for_status()
         xml = r.content
 
         # Publication id provides a more consistent way of naming the file than the href
         m = re.search(rb'<PUBLICATION_ID>(\d{4})(\d{2})</PUBLICATION_ID>',xml)
+        agenda_year = m.group(1).decode('utf8')
+        agenda_month = m.group(2).decode('utf8')
 
-        save_file = os.path.join(download_dir, 'agenda', f"{m.group(1).decode('utf8')}-{m.group(2).decode('utf8')}.xml")
+        save_file = os.path.join(download_dir, 'agenda', f"{agenda_year}-{agenda_month}.xml")
 
-        if int(m.group(1).decode('utf8') + m.group(2).decode('utf8')) >= int(start_agenda) and int(m.group(1).decode('utf8') + m.group(2).decode('utf8')) <= int(end_agenda):
+        if int(agenda_year + agenda_month) >= int(start_agenda) and int(agenda_year + agenda_month) <= int(end_agenda):
 
             with open(save_file,'wb') as f:
                 f.write(xml)
-            print(f"{m.group(1).decode('utf8') + m.group(2).decode('utf8')} complete!")
+                df_agenda_list[f"{agenda_year}-{agenda_month}"] = {'url':url}
+                
+            print(f"\n{m.group(1).decode('utf8') + m.group(2).decode('utf8')} complete!")
         else:
-            print(f"{m.group(1).decode('utf8') + m.group(2).decode('utf8')} is out of range!")
+            print(f"\n{m.group(1).decode('utf8') + m.group(2).decode('utf8')} is out of range!")
 
+    with open(agenda_list_path,'w') as f:
+        json.dump(df_agenda_list, f)
 if __name__ == '__main__':
     main()
